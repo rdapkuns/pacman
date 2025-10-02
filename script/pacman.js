@@ -19,6 +19,8 @@ let respawnTimeout = null;
 let fruitTemplate = null; // holds the loaded cherry glTF scene
 let fruitAnimations = null;
 let fruit = null;
+let collectingFruit = false
+
 
 const platformSize = 30;
 const frustumSize = 40; // moved here so it's global
@@ -135,7 +137,7 @@ function spawnFruit() {
     // Apply animation (reuse original clips)
     if (fruitAnimations && fruitAnimations.length > 0) {
         const fruitMixer = new THREE.AnimationMixer(fruit);
-        const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
+        const action = fruitMixer.clipAction(fruitAnimations[1]); // pick the first animation
         action.play();
         mixers.push(fruitMixer);
     }
@@ -192,9 +194,27 @@ function animate() {
 
         // Collision detection
         if (fruit && !isFalling && pacman.position.distanceTo(fruit.position) < 1.2) {
+
             score++;
             document.getElementById('score').innerText = "Score: " + score;
-            spawnFruit();
+
+            if (collectingFruit === false) {
+                const fruitMixer = new THREE.AnimationMixer(fruit);
+                const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
+
+                collectingFruit = true
+                action.setLoop(THREE.LoopOnce);
+                action.clampWhenFinished = true;
+                action.play();
+                mixers.push(fruitMixer);
+
+                fruitMixer.addEventListener('finished', () => {
+                    scene.remove(fruit);
+                    mixers = mixers.filter(m => m !== fruitMixer); // cleanup
+                    spawnFruit();
+                    collectingFruit = false
+                });
+            }
         }
     }
 
