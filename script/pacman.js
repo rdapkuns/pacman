@@ -132,7 +132,7 @@ function loadFruitModel() {
     const loader = new GLTFLoader();
     loader.load('/cherry.glb', (gltf) => {
         fruitTemplate = gltf.scene;
-        fruitTemplate.scale.set(1, 1, 1);
+        fruitTemplate.scale.set(1.5, 1.5, 1.5);
 
         // Save animations separately (don't attach to userData)
         fruitAnimations = gltf.animations;
