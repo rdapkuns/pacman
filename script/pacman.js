@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+import groundVertex from './shaders/ground.vert.glsl?raw';
+import groundFragment from './shaders/ground.frag.glsl?raw';
+
+
 let scene, camera, renderer;
 // let fruit;
 let score = 0;
@@ -11,6 +15,9 @@ let pacman;
 
 let mouse = new THREE.Vector2();
 let targetWorldPos = new THREE.Vector3();
+
+let groundMaterial, ground;
+
 
 let isFalling = false;
 let fallSpeed = 0;
@@ -49,16 +56,17 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    scene.add(new THREE.AmbientLight(0xffffff, 1));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
     // Ground plane
-    const groundGeo = new THREE.PlaneGeometry(platformSize, platformSize);
-    const groundMat = new THREE.MeshPhongMaterial({ color: 0x000000 });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
+    // const groundGeo = new THREE.PlaneGeometry(platformSize, platformSize);
+    // const groundMat = new THREE.MeshPhongMaterial({ color: 0x3b3b3b });
+    // const ground = new THREE.Mesh(groundGeo, groundMat);
+    // ground.rotation.x = -Math.PI / 2;
+    createGround()
     scene.add(ground);
 
     loadPacman();
@@ -68,6 +76,25 @@ function init() {
     // Mouse control
     document.addEventListener('mousemove', onMouseMove);
     window.addEventListener('resize', onWindowResize);
+}
+
+
+function createGround() {
+    const groundGeo = new THREE.PlaneGeometry(platformSize, platformSize);
+
+    groundMaterial = new THREE.ShaderMaterial({
+        vertexShader: groundVertex,
+        fragmentShader: groundFragment,
+        uniforms: {
+            iTime: { value: 0 },
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        },
+        side: THREE.DoubleSide
+    });
+
+    ground = new THREE.Mesh(groundGeo, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    scene.add(ground);
 }
 
 function loadPacman() {
@@ -160,6 +187,10 @@ function animate() {
     const delta = clock.getDelta();
     mixers.forEach(m => m.update(delta));
 
+    if (groundMaterial) {
+        groundMaterial.uniforms.iTime.value = clock.getElapsedTime();
+    }
+
     if (pacman) {
         if (!isFalling) {
             // Normal movement toward target
@@ -195,10 +226,10 @@ function animate() {
         // Collision detection
         if (fruit && !isFalling && pacman.position.distanceTo(fruit.position) < 1.2) {
 
-            score++;
-            document.getElementById('score').innerText = "Score: " + score;
-
             if (collectingFruit === false) {
+                score++;
+                document.getElementById('score').innerText = "Score: " + score;
+
                 const fruitMixer = new THREE.AnimationMixer(fruit);
                 const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
 
