@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer;
-let fruit;
+// let fruit;
 let score = 0;
 
 let mixers = []; // store all animation mixers
@@ -15,6 +15,10 @@ let targetWorldPos = new THREE.Vector3();
 let isFalling = false;
 let fallSpeed = 0;
 let respawnTimeout = null;
+
+let fruitTemplate = null; // holds the loaded cherry glTF scene
+let fruitAnimations = null;
+let fruit = null;
 
 const platformSize = 30;
 const frustumSize = 40; // moved here so it's global
@@ -43,20 +47,21 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     // Lights
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
     // Ground plane
     const groundGeo = new THREE.PlaneGeometry(platformSize, platformSize);
-    const groundMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+    const groundMat = new THREE.MeshPhongMaterial({ color: 0x000000 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
 
     loadPacman();
-    spawnFruit();
+    loadFruitModel();
+    // spawnFruit();
 
     // Mouse control
     document.addEventListener('mousemove', onMouseMove);
@@ -94,34 +99,48 @@ function loadPacman() {
     });
 }
 
+function loadFruitModel() {
+    const loader = new GLTFLoader();
+    loader.load('/cherry.glb', (gltf) => {
+        fruitTemplate = gltf.scene;
+        fruitTemplate.scale.set(1, 1, 1);
+
+        // Save animations separately (don't attach to userData)
+        fruitAnimations = gltf.animations;
+
+        // Spawn the first fruit once the template is ready
+        spawnFruit();
+    });
+}
 
 
 function spawnFruit() {
+    if (!fruitTemplate) return; // not loaded yet
+
+    // remove old fruit
     if (fruit) {
-        // Remove old fruit and its mixer
         scene.remove(fruit);
         mixers = mixers.filter(m => m.getRoot() !== fruit);
     }
 
-    const loader = new GLTFLoader();
-    loader.load('/cherry.glb', (gltf) => {
-        fruit = gltf.scene;
-        fruit.scale.set(1, 1, 1);
-        fruit.position.set(
-            (Math.random() - 0.5) * (platformSize - 2),
-            0.5,
-            (Math.random() - 0.5) * (platformSize - 2)
-        );
-        scene.add(fruit);
+    // clone the model
+    fruit = fruitTemplate.clone(true);
+    fruit.position.set(
+        (Math.random() - 0.5) * (platformSize - 2),
+        0.5,
+        (Math.random() - 0.5) * (platformSize - 2)
+    );
+    scene.add(fruit);
 
-        if (gltf.animations.length > 0) {
-            const fruitMixer = new THREE.AnimationMixer(fruit);
-            const action = fruitMixer.clipAction(gltf.animations[0]);
-            action.play();
-            mixers.push(fruitMixer);
-        }
-    });
+    // Apply animation (reuse original clips)
+    if (fruitAnimations && fruitAnimations.length > 0) {
+        const fruitMixer = new THREE.AnimationMixer(fruit);
+        const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
+        action.play();
+        mixers.push(fruitMixer);
+    }
 }
+
 
 function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -145,7 +164,7 @@ function animate() {
             const direction = targetWorldPos.clone().sub(pacman.position);
             direction.y = 0;
 
-            if (direction.length() > 0.05) {
+            if (direction.length() > 0.2) {
                 direction.normalize().multiplyScalar(0.2);
                 pacman.position.add(direction);
                 pacman.position.y = 1;
