@@ -4,6 +4,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import groundVertex from './shaders/ground.vert.glsl?raw';
 import groundFragment from './shaders/ground.frag.glsl?raw';
 
+import { gsap } from "gsap";
+
 
 let scene, camera, renderer;
 // let fruit;
@@ -31,6 +33,8 @@ let collectingFruit = false
 
 const platformSize = 30;
 const frustumSize = 40; // moved here so it's global
+let shaderProps = { speed: 1 };
+
 
 init();
 animate();
@@ -175,11 +179,14 @@ function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
+    // shaderProps = mouse.x + 1
+
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     raycaster.ray.intersectPlane(plane, targetWorldPos);
 }
+
 
 function animate() {
     requestAnimationFrame(animate);
@@ -188,7 +195,7 @@ function animate() {
     mixers.forEach(m => m.update(delta));
 
     if (groundMaterial) {
-        groundMaterial.uniforms.iTime.value = clock.getElapsedTime();
+        groundMaterial.uniforms.iTime.value = clock.getElapsedTime() + shaderProps.speed;
     }
 
     if (pacman) {
@@ -239,11 +246,33 @@ function animate() {
                 action.play();
                 mixers.push(fruitMixer);
 
+                // shaderProps.speed = 3
+
+                // gsap.to(shaderProps, { // selector text, Array, or object
+                //     speed: 5, // any properties (not limited to CSS)
+                //     duration: 1,
+                //     yoyo: true, // if true > A-B-B-A, if false > A-B-A-B
+                //     yoyoEase: true, // or ease like "power2"
+                // });
+
+                var tl = gsap.timeline({
+                    onUpdate: () => {
+                        console.log(shaderProps.speed)
+                    },
+                });
+                tl.to(shaderProps, {
+                    speed: shaderProps.speed + 7,
+                    duration: 1.5,
+                    ease: "circ.out",
+                });
+                // tl.to(shaderProps, { speed: 1, duration: 1 });
+
                 fruitMixer.addEventListener('finished', () => {
                     scene.remove(fruit);
                     mixers = mixers.filter(m => m !== fruitMixer); // cleanup
                     spawnFruit();
                     collectingFruit = false
+
                 });
             }
         }
