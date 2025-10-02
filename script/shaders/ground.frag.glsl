@@ -1,6 +1,12 @@
 uniform float iTime;
 uniform vec2 iResolution;
 
+uniform vec3 color1;
+uniform vec3 color2;
+uniform vec3 color3;
+uniform vec3 color4;
+
+
 varying vec2 vUv;
 
 #define PI 3.14159265359
@@ -51,11 +57,11 @@ void main() {
 
   vec3 col;
 
-  if (sum == 0.) col = vec3(0.369, 0.29, 0.659);
+  if (sum == 0.) col = color4;
   
-  if (sum == 1.) col = vec3(0.082, 0.384, 0.522);
-  if (sum == 2.) col = vec3(0, .18, .42);
-  if (sum == 3.) col = vec3(0, 0.4, 0.8);
+  if (sum == 1.0) col = color1;
+  if (sum == 2.0) col = color2;
+  if (sum == 3.0) col = color3;
 
   gl_FragColor = vec4(vec3(circle*col), 1);
 }

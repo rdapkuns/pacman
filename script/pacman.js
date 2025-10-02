@@ -91,7 +91,11 @@ function createGround() {
         fragmentShader: groundFragment,
         uniforms: {
             iTime: { value: 0 },
-            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            color1: { value: new THREE.Color(0.082, 0.384, 0.522) },
+            color2: { value: new THREE.Color(0.0, 0.18, 0.42) },
+            color3: { value: new THREE.Color(0.5, 0.4, 0.8) },
+            color4: { value: new THREE.Color(0.082, 0.384, 0.522) }
         },
         side: THREE.DoubleSide
     });
@@ -226,6 +230,79 @@ function animate() {
             pacman.position.y += fallSpeed;
 
             if (pacman.position.y < -10 && !respawnTimeout) {
+
+                var tl = gsap.timeline({
+                    onUpdate: () => {
+                        // console.log(shaderProps.speed)
+                    },
+                });
+
+                tl.to(shaderProps, {
+                    speed: shaderProps.speed + 10,
+                    duration: 2.5,
+                    ease: "circ.out",
+                }).to(groundMaterial.uniforms.color1.value, {
+                    r: 0.5,
+                    g: 0.8,
+                    b: 0.9,
+                    duration: 0.5,
+                    ease: "circ.out",
+                }, ('<')).to(groundMaterial.uniforms.color1.value, {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
+                    duration: 1.0,
+                    delay: 0.5,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color2.value, {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
+                    duration: 1.0,
+                    // delay: 0.5,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color3.value, {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
+                    duration: 1.0,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color4.value, {
+                    r: 0.0,
+                    g: 0.0,
+                    b: 0.0,
+                    duration: 1.0,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color1.value, {
+                    r: 0.082,
+                    g: 0.384,
+                    b: 0.522,
+                    duration: 1.0,
+                    delay: 1.5,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color2.value, {
+                    r: 0.0,
+                    g: 0.18,
+                    b: 0.42,
+                    duration: 1.0,
+                    // delay: 0.5,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color3.value, {
+                    r: 0.5,
+                    g: 0.4,
+                    b: 0.8,
+                    duration: 1.0,
+                    // delay: 0.5,
+                    ease: "power1.inOut",
+                }, ('<')).to(groundMaterial.uniforms.color4.value, {
+                    r: 0.369,
+                    g: 0.29,
+                    b: 0.659,
+                    duration: 1.0,
+                    // delay: 0.5,
+                    ease: "power1.inOut",
+                }, ('<'));
+
                 respawnTimeout = setTimeout(respawnPacman, 3000);
             }
         }
@@ -246,24 +323,28 @@ function animate() {
                 action.play();
                 mixers.push(fruitMixer);
 
-                // shaderProps.speed = 3
-
-                // gsap.to(shaderProps, { // selector text, Array, or object
-                //     speed: 5, // any properties (not limited to CSS)
-                //     duration: 1,
-                //     yoyo: true, // if true > A-B-B-A, if false > A-B-A-B
-                //     yoyoEase: true, // or ease like "power2"
-                // });
-
                 var tl = gsap.timeline({
                     onUpdate: () => {
-                        console.log(shaderProps.speed)
+                        // console.log(shaderProps.speed)
                     },
                 });
+
                 tl.to(shaderProps, {
                     speed: shaderProps.speed + 7,
                     duration: 1.5,
                     ease: "circ.out",
+                }).to(groundMaterial.uniforms.color1.value, {
+                    r: 0.5,
+                    g: 0.8,
+                    b: 0.9,
+                    duration: 0.5,
+                    ease: "circ.out",
+                }, ('<')).to(groundMaterial.uniforms.color1.value, {
+                    r: 0.082,
+                    g: 0.384,
+                    b: 0.522,
+                    duration: 0.5,
+                    ease: "power1.inOut",
                 });
                 // tl.to(shaderProps, { speed: 1, duration: 1 });
 
