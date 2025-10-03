@@ -181,7 +181,7 @@ function loadPacman() {
         gltf.animations.forEach((clip) => {
             // console.log(pacmanMixer.clipAction(clip))
             pacmanActions[clip.name] = pacmanMixer.clipAction(clip);
-            console.log(pacmanActions)
+            // console.log(pacmanActions)
         });
 
         activeAction = pacmanActions["JUMP"];
@@ -288,7 +288,7 @@ function animate() {
     mixers.forEach(m => m.update(delta));
     if (pacmanMixer) pacmanMixer.update(delta);
 
-    if (ghost) ghost.update();
+    if (ghost) ghost.update(delta);
 
     if (groundMaterial) {
         groundMaterial.uniforms.iTime.value = clock.getElapsedTime() + shaderProps.speed;
@@ -427,8 +427,8 @@ function animate() {
 
         //IF CAUGHT BY GHOST
 
-        if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 1.2) {
-            console.log("caught")
+        if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 2) {
+            // console.log("caught")
             isCaught = true
             playPacmanAnimation("DIE", { once: true });
             shaderAnimationDie()

@@ -1,39 +1,48 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export default class Ghost {
     constructor(scene, pacman) {
         this.scene = scene;
         this.pacman = pacman;
-
-        // Create a simple cube for now
-        const geo = new THREE.BoxGeometry(1, 1, 1);
-        const mat = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-        this.mesh = new THREE.Mesh(geo, mat);
-
-        this.mesh.position.set(
-            (Math.random() - 0.5) * 20,
-            1,
-            (Math.random() - 0.5) * 20
-        );
+        this.mesh = null;
+        this.mixer = null;
 
         this.speed = 0.05;
 
-        scene.add(this.mesh);
+        const loader = new GLTFLoader();
+        loader.load("/ghost.glb", (gltf) => {
+            this.mesh = gltf.scene;
+            this.mesh.scale.set(1, 1, 1);
+            this.mesh.position.set(
+                (Math.random() - 0.5) * 20,
+                2.5,
+                (Math.random() - 0.5) * 20
+            );
+
+            this.scene.add(this.mesh);
+
+            if (gltf.animations.length > 0) {
+                this.mixer = new THREE.AnimationMixer(this.mesh);
+                const action = this.mixer.clipAction(gltf.animations[2]);
+                console.log(gltf.animations[2])
+                action.play();
+            }
+        });
     }
 
-    update() {
-        if (!this.pacman) return;
-        
-        // Direction from ghost to pacman
-        const dir = new THREE.Vector3().subVectors(this.pacman.position, this.mesh.position);
+    update(delta) {
+        if (!this.mesh || !this.pacman) return;
 
-        dir.y = 0; // Keep movement flat on ground
+        // Move toward Pac-Man
+        const dir = new THREE.Vector3().subVectors(this.pacman.position, this.mesh.position);
+        dir.y = 0;
         if (dir.length() > 0.1) {
             dir.normalize().multiplyScalar(this.speed);
             this.mesh.position.add(dir);
-
-            // Face Pac-Man
             this.mesh.lookAt(this.pacman.position.clone().setY(this.mesh.position.y));
         }
+
+        if (this.mixer) this.mixer.update(delta);
     }
 }
