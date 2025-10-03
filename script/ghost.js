@@ -8,7 +8,7 @@ export default class Ghost {
         this.mesh = null;
         this.mixer = null;
 
-        this.speed = 0.05;
+        this.speed = 0.10;
 
         const loader = new GLTFLoader();
         loader.load("/ghost.glb", (gltf) => {
