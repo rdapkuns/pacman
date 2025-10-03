@@ -5,6 +5,10 @@ import groundVertex from './shaders/ground.vert.glsl?raw';
 import groundFragment from './shaders/ground.frag.glsl?raw';
 
 import { gsap } from "gsap";
+import { thickness } from "three/tsl";
+
+import Ghost from "./ghost.js";
+
 
 
 let scene, camera, renderer;
@@ -14,13 +18,19 @@ let score = 0;
 let mixers = []; // store all animation mixers
 let clock = new THREE.Clock();
 let pacman;
+let ghost;
+
+let pacmanMixer;
+let pacmanActions = {};
+let activeAction;
+
 
 let mouse = new THREE.Vector2();
 let targetWorldPos = new THREE.Vector3();
 
 let groundMaterial, ground;
 
-
+let isCaught = false
 let isFalling = false;
 let fallSpeed = 0;
 let respawnTimeout = null;
@@ -65,22 +75,44 @@ function init() {
     dirLight.position.set(5, 10, 7);
     scene.add(dirLight);
 
-    // Ground plane
-    // const groundGeo = new THREE.PlaneGeometry(platformSize, platformSize);
-    // const groundMat = new THREE.MeshPhongMaterial({ color: 0x3b3b3b });
-    // const ground = new THREE.Mesh(groundGeo, groundMat);
-    // ground.rotation.x = -Math.PI / 2;
     createGround()
     scene.add(ground);
 
     loadPacman();
     loadFruitModel();
+
     // spawnFruit();
 
     // Mouse control
     document.addEventListener('mousemove', onMouseMove);
     window.addEventListener('resize', onWindowResize);
 }
+
+function playPacmanAnimation(name, { once = false } = {}) {
+    if (!pacmanMixer || !pacmanActions[name]) return;
+
+    const newAction = pacmanActions[name];
+
+    if (activeAction !== newAction) {
+        // Configure looping mode
+        if (once) {
+            newAction.setLoop(THREE.LoopOnce, 0);
+            newAction.clampWhenFinished = true;
+        } else {
+            newAction.setLoop(THREE.LoopRepeat);
+            newAction.clampWhenFinished = false;
+        }
+
+        // Crossfade
+        if (activeAction) {
+            activeAction.fadeOut(0.2);
+        }
+        newAction.reset().fadeIn(0.2).play();
+
+        activeAction = newAction;
+    }
+}
+
 
 
 function createGround() {
@@ -95,14 +127,23 @@ function createGround() {
             color1: { value: new THREE.Color(0.082, 0.384, 0.522) },
             color2: { value: new THREE.Color(0.0, 0.18, 0.42) },
             color3: { value: new THREE.Color(0.5, 0.4, 0.8) },
-            color4: { value: new THREE.Color(0.082, 0.384, 0.522) }
+            color4: { value: new THREE.Color(0.23, 0.18, 0.56) },
+            thickness: { value: 2.2 }
         },
         side: THREE.DoubleSide
     });
 
     ground = new THREE.Mesh(groundGeo, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
+
+    const baseGeo = new THREE.BoxGeometry(platformSize, 4, platformSize);
+    const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x050a1a });
+    const base = new THREE.Mesh(baseGeo, baseMaterial);
+    base.position.set(0, -2.1, 0)
+
     scene.add(ground);
+    scene.add(base);
+
 }
 
 function loadPacman() {
@@ -127,12 +168,27 @@ function loadPacman() {
 
         scene.add(pacman);
 
-        if (gltf.animations.length > 0) {
-            const pacmanMixer = new THREE.AnimationMixer(pacman);
-            const action = pacmanMixer.clipAction(gltf.animations[1]);
-            action.play();
-            mixers.push(pacmanMixer);
-        }
+        // if (gltf.animations.length > 0) {
+        //     const pacmanMixer = new THREE.AnimationMixer(pacman);
+        //     console.log(gltf.animations[2])
+        //     const action = pacmanMixer.clipAction(gltf.animations[2]);
+        //     action.play();
+        //     mixers.push(pacmanMixer);
+        // }
+
+        pacmanMixer = new THREE.AnimationMixer(pacman);
+
+        gltf.animations.forEach((clip) => {
+            // console.log(pacmanMixer.clipAction(clip))
+            pacmanActions[clip.name] = pacmanMixer.clipAction(clip);
+            console.log(pacmanActions)
+        });
+
+        activeAction = pacmanActions["JUMP"];
+        activeAction.play();
+
+        ghost = new Ghost(scene, pacman);
+
     });
 }
 
@@ -191,19 +247,55 @@ function onMouseMove(event) {
     raycaster.ray.intersectPlane(plane, targetWorldPos);
 }
 
+function shaderAnimationDie() {
+    var tl = gsap.timeline({
+
+    });
+
+    tl.to(shaderProps, {
+        speed: shaderProps.speed + 10,
+        duration: 2.5,
+        ease: "circ.out",
+    }).to(groundMaterial.uniforms.color1.value, {
+        r: 0.5,
+        g: 0.8,
+        b: 0.9,
+        duration: 0.5,
+        ease: "circ.out",
+    }, ('<')).to(groundMaterial.uniforms.thickness, {
+        value: 3.4,
+        duration: 1.5,
+        ease: "circ.out",
+    }, ('<50%')).to(groundMaterial.uniforms.color1.value, {
+        r: 0.082,
+        g: 0.384,
+        b: 0.522,
+        duration: 1.0,
+        delay: 1.5,
+        ease: "power1.inOut",
+    }, ('<')).to(groundMaterial.uniforms.thickness, {
+        value: 2.2,
+        duration: 1.0,
+        ease: "circ.out",
+    })
+}
+
 
 function animate() {
     requestAnimationFrame(animate);
 
     const delta = clock.getDelta();
     mixers.forEach(m => m.update(delta));
+    if (pacmanMixer) pacmanMixer.update(delta);
+
+    if (ghost) ghost.update();
 
     if (groundMaterial) {
         groundMaterial.uniforms.iTime.value = clock.getElapsedTime() + shaderProps.speed;
     }
 
     if (pacman) {
-        if (!isFalling) {
+        if (!isFalling && !isCaught) {
             // Normal movement toward target
             const direction = targetWorldPos.clone().sub(pacman.position);
             direction.y = 0;
@@ -221,90 +313,64 @@ function animate() {
                 Math.abs(pacman.position.x) > platformSize / 2 + 1 ||
                 Math.abs(pacman.position.z) > platformSize / 2 + 1
             ) {
-                startFalling();
+                isFalling = true
+                fallSpeed = 0;
             }
 
-        } else {
+        } else if (isFalling) {
             // Falling
             fallSpeed -= 0.02;
             pacman.position.y += fallSpeed;
 
             if (pacman.position.y < -10 && !respawnTimeout) {
 
-                var tl = gsap.timeline({
-                    onUpdate: () => {
-                        // console.log(shaderProps.speed)
-                    },
-                });
+                // var tl = gsap.timeline({
 
-                tl.to(shaderProps, {
-                    speed: shaderProps.speed + 10,
-                    duration: 2.5,
-                    ease: "circ.out",
-                }).to(groundMaterial.uniforms.color1.value, {
-                    r: 0.5,
-                    g: 0.8,
-                    b: 0.9,
-                    duration: 0.5,
-                    ease: "circ.out",
-                }, ('<')).to(groundMaterial.uniforms.color1.value, {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                    duration: 1.0,
-                    delay: 0.5,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color2.value, {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                    duration: 1.0,
-                    // delay: 0.5,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color3.value, {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                    duration: 1.0,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color4.value, {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                    duration: 1.0,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color1.value, {
-                    r: 0.082,
-                    g: 0.384,
-                    b: 0.522,
-                    duration: 1.0,
-                    delay: 1.5,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color2.value, {
-                    r: 0.0,
-                    g: 0.18,
-                    b: 0.42,
-                    duration: 1.0,
-                    // delay: 0.5,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color3.value, {
-                    r: 0.5,
-                    g: 0.4,
-                    b: 0.8,
-                    duration: 1.0,
-                    // delay: 0.5,
-                    ease: "power1.inOut",
-                }, ('<')).to(groundMaterial.uniforms.color4.value, {
-                    r: 0.369,
-                    g: 0.29,
-                    b: 0.659,
-                    duration: 1.0,
-                    // delay: 0.5,
-                    ease: "power1.inOut",
-                }, ('<'));
+                // });
 
+                // tl.to(shaderProps, {
+                //     speed: shaderProps.speed + 10,
+                //     duration: 2.5,
+                //     ease: "circ.out",
+                // }).to(groundMaterial.uniforms.color1.value, {
+                //     r: 0.5,
+                //     g: 0.8,
+                //     b: 0.9,
+                //     duration: 0.5,
+                //     ease: "circ.out",
+                // }, ('<')).to(groundMaterial.uniforms.thickness, {
+                //     value: 3.4,
+                //     duration: 1.5,
+                //     ease: "circ.out",
+                // }, ('<50%')).to(groundMaterial.uniforms.color1.value, {
+                //     r: 0.082,
+                //     g: 0.384,
+                //     b: 0.522,
+                //     duration: 1.0,
+                //     delay: 1.5,
+                //     ease: "power1.inOut",
+                // }, ('<')).to(groundMaterial.uniforms.thickness, {
+                //     value: 2.2,
+                //     duration: 1.0,
+                //     ease: "circ.out",
+                // })
+                shaderAnimationDie()
                 respawnTimeout = setTimeout(respawnPacman, 3000);
             }
+            // if (pacman.position.y > 20) {
+            //     isFalling = false
+            //     fallSpeed = 0;
+            //     // pacman.position.y = 1
+            //     gsap.to(pacman.position, {
+            //         y: 1,
+            //         duration: 2,
+            //         delay: 3000,
+            //         ease: "bounce.out",
+            //         onUpdate: () => {
+            //             console.log(pacman.position.y)
+            //         },
+            //     })
+            // }
         }
 
         // Collision detection
@@ -344,8 +410,9 @@ function animate() {
                     g: 0.384,
                     b: 0.522,
                     duration: 0.5,
+                    delay: 0.6,
                     ease: "power1.inOut",
-                });
+                }, ('<'));
                 // tl.to(shaderProps, { speed: 1, duration: 1 });
 
                 fruitMixer.addEventListener('finished', () => {
@@ -356,6 +423,16 @@ function animate() {
 
                 });
             }
+        }
+
+        //IF CAUGHT BY GHOST
+
+        if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 1.2) {
+            console.log("caught")
+            isCaught = true
+            playPacmanAnimation("DIE", { once: true });
+            shaderAnimationDie()
+            respawnTimeout = setTimeout(respawnPacman, 3000);
         }
     }
 
@@ -372,17 +449,15 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function startFalling() {
-    isFalling = true;
-    fallSpeed = 0;
-}
 
 function respawnPacman() {
-    pacman.position.set(0, 1, 0);
+    pacman.position.set(0, 30, 0);
     fallSpeed = 0;
     isFalling = false;
+    isCaught = false
     respawnTimeout = null;
 
     score = 0;
     document.getElementById('score').innerText = "Score: " + score;
+    playPacmanAnimation("JUMP");
 }

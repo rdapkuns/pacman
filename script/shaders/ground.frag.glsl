@@ -6,6 +6,8 @@ uniform vec3 color2;
 uniform vec3 color3;
 uniform vec3 color4;
 
+uniform float thickness;
+
 
 varying vec2 vUv;
 
@@ -38,7 +40,7 @@ void main() {
   uv.x = mod(uv.x - m,2.*m) - m;
 
   float stripe = abs(uv.x)/m - m; 
-  stripe-=.25 * 2.2;
+  stripe-=.25 * thickness;
 
   //THICCNESS
 
