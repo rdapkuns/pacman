@@ -427,7 +427,7 @@ function animate() {
 
         //IF CAUGHT BY GHOST
 
-        if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 2) {
+        if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 3) {
             // console.log("caught")
             isCaught = true
             playPacmanAnimation("DIE", { once: true });

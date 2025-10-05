@@ -37,7 +37,7 @@ export default class Ghost {
         // Move toward Pac-Man
         const dir = new THREE.Vector3().subVectors(this.pacman.position, this.mesh.position);
         dir.y = 0;
-        if (dir.length() > 0.1) {
+        if (dir.length() > 1.5) {
             dir.normalize().multiplyScalar(this.speed);
             this.mesh.position.add(dir);
             this.mesh.lookAt(this.pacman.position.clone().setY(this.mesh.position.y));
