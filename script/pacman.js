@@ -25,6 +25,10 @@ let pacmanMixer;
 let pacmanActions = {};
 let activeAction;
 
+let AUDIO = false
+let PAUSED = false
+
+
 
 let mouse = new THREE.Vector2();
 let targetWorldPos = new THREE.Vector3();
@@ -49,6 +53,8 @@ let shaderProps = { speed: 1 };
 
 let collectSound, deathSound, fallSound;
 const audioLoader = new AudioLoader();
+
+let audioButton
 
 
 init();
@@ -117,9 +123,56 @@ function init() {
     document.addEventListener('mousemove', onMouseMove);
     window.addEventListener('resize', onWindowResize);
 
-    // window.addEventListener('click', () => {
-    //     if (collectSound) collectSound.play();
-    // });
+    audioButton = document.querySelector(".button__audio")
+    audioButton.addEventListener("click", handleAudioToggle)
+
+}
+
+function handleAudioToggle() {
+    AUDIO = !AUDIO
+    console.log(AUDIO)
+
+    if (AUDIO) {
+        audioButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="18" viewBox="0 0 22 18" fill="none">
+      <rect x="6" y="13" width="2" height="2" fill="#181822"/>
+      <rect x="6" y="3" width="2" height="2" fill="#181822"/>
+      <rect x="12" y="6" width="2" height="6" fill="#181822"/>
+      <rect x="14" y="2" width="2" height="2" fill="#181822"/>
+      <rect x="18" width="2" height="2" fill="#181822"/>
+      <rect x="18" y="16" width="2" height="2" fill="#181822"/>
+      <rect x="16" y="4" width="2" height="10" fill="#181822"/>
+      <rect x="20" y="2" width="2" height="14" fill="#181822"/>
+      <rect x="14" y="14" width="2" height="2" fill="#181822"/>
+      <rect x="8" y="1" width="2" height="16" fill="#181822"/>
+      <rect y="9" width="4" height="4" fill="#181822"/>
+      <rect x="4" y="9" width="4" height="4" fill="#181822"/>
+      <rect y="5" width="4" height="4" fill="#181822"/>
+      <rect x="4" y="5" width="4" height="4" fill="#181822"/>
+    </svg>
+        `
+    } else {
+        audioButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="16" viewBox="0 0 22 16" fill="none">
+                <rect x="6" y="12" width="2" height="2" fill="#181822" />
+                <rect x="6" y="2" width="2" height="2" fill="#181822" />
+                <rect x="12" y="11" width="2" height="2" fill="#181822" />
+                <rect width="2" height="2" transform="matrix(-1 0 0 1 22 11)" fill="#181822" />
+                <rect width="2" height="2" transform="matrix(-1 0 0 1 16 5)" fill="#181822" />
+                <rect x="14" y="9" width="2" height="2" fill="#181822" />
+                <rect width="2" height="2" transform="matrix(-1 0 0 1 20 9)" fill="#181822" />
+                <rect width="2" height="2" transform="matrix(-1 0 0 1 14 3)" fill="#181822" />
+                <rect x="16" y="7" width="2" height="2" fill="#181822" />
+                <rect x="18" y="5" width="2" height="2" fill="#181822" />
+                <rect x="20" y="3" width="2" height="2" fill="#181822" />
+                <rect x="8" width="2" height="16" fill="#181822" />
+                <rect y="8" width="4" height="4" fill="#181822" />
+                <rect x="4" y="8" width="4" height="4" fill="#181822" />
+                <rect y="4" width="4" height="4" fill="#181822" />
+                <rect x="4" y="4" width="4" height="4" fill="#181822" />
+            </svg>
+        `
+    }
 }
 
 function playPacmanAnimation(name, { once = false } = {}) {
@@ -316,7 +369,9 @@ function shaderAnimationDie() {
 
 
 function animate() {
-    requestAnimationFrame(animate);
+    if(!PAUSED){
+        requestAnimationFrame(animate);
+    }
 
     const delta = clock.getDelta();
     mixers.forEach(m => m.update(delta));
@@ -359,7 +414,7 @@ function animate() {
             if (pacman.position.y < -10 && !respawnTimeout) {
 
 
-                if (fallSound && !fallSound.isPlaying) {
+                if (fallSound && !fallSound.isPlaying && AUDIO) {
                     fallSound.play();
                 }
 
@@ -374,9 +429,9 @@ function animate() {
 
             if (collectingFruit === false) {
                 score++;
-                document.getElementById('score').innerText =score;
+                document.getElementById('score').innerText = score;
 
-                if (collectSound && !collectSound.isPlaying) {
+                if (collectSound && !collectSound.isPlaying && AUDIO) {
                     collectSound.play();
                 }
                 const fruitMixer = new THREE.AnimationMixer(fruit);
@@ -432,15 +487,15 @@ function animate() {
             playPacmanAnimation("DIE", { once: true });
             shaderAnimationDie()
             respawnTimeout = setTimeout(respawnPacman, 3000);
-            
-            if (deathSound && !deathSound.isPlaying) {
+
+            if (deathSound && !deathSound.isPlaying && AUDIO) {
                 deathSound.play();
             }
 
             const distanceFromCenter = pacman.position.length(); // distance to (0, 0)
             if (distanceFromCenter < platformSize * 0.35) { // e.g. inner 25% of platform
                 setTimeout(() => {
-                ghost.respawn();
+                    ghost.respawn();
                 }, 3000);
             }
         }
