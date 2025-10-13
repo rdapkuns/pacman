@@ -14,11 +14,7 @@ export default class Ghost {
         loader.load("/ghost.glb", (gltf) => {
             this.mesh = gltf.scene;
             this.mesh.scale.set(1, 1, 1);
-            this.mesh.position.set(
-                (Math.random() - 0.5) * 20,
-                2.5,
-                (Math.random() - 0.5) * 20
-            );
+            this.respawn();
 
             this.scene.add(this.mesh);
 
@@ -45,4 +41,37 @@ export default class Ghost {
 
         if (this.mixer) this.mixer.update(delta);
     }
+
+    respawn() {
+        if (!this.mesh) return;
+
+        const platformSize = 30
+
+        const edgeOffset = platformSize / 2 - 1; // stay slightly inside the edge
+        const side = Math.floor(Math.random() * 4); // pick one of 4 sides
+        let x, z;
+
+        switch (side) {
+            case 0: // top edge
+                x = (Math.random() - 0.5) * platformSize;
+                z = edgeOffset;
+                break;
+            case 1: // bottom edge
+                x = (Math.random() - 0.5) * platformSize;
+                z = -edgeOffset;
+                break;
+            case 2: // left edge
+                x = -edgeOffset;
+                z = (Math.random() - 0.5) * platformSize;
+                break;
+            case 3: // right edge
+                x = edgeOffset;
+                z = (Math.random() - 0.5) * platformSize;
+                break;
+        }
+
+        this.mesh.position.set(x, 2.5, z);
+    }
+
+
 }

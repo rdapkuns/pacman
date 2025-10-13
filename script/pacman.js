@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Audio, AudioLoader } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import groundVertex from './shaders/ground.vert.glsl?raw';
@@ -8,7 +9,7 @@ import { gsap } from "gsap";
 import { thickness } from "three/tsl";
 
 import Ghost from "./ghost.js";
-
+import audioCollect from "/retro-coin.mp3"
 
 
 let scene, camera, renderer;
@@ -46,12 +47,16 @@ const frustumSize = 40; // moved here so it's global
 let shaderProps = { speed: 1 };
 
 
+let collectSound, deathSound, fallSound;
+const audioLoader = new AudioLoader();
+
+
 init();
 animate();
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x202020);
+    scene.background = new THREE.Color(0x181822);
 
     const aspect = window.innerWidth / window.innerHeight;
     camera = new THREE.OrthographicCamera(
@@ -62,8 +67,11 @@ function init() {
         0.1,
         1000
     );
-    camera.position.set(-20, 20, 20);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(-20, 23, 20);
+    camera.lookAt(0, 3, 0);
+
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -83,9 +91,35 @@ function init() {
 
     // spawnFruit();
 
+
+    audioLoader.load('/retro-coin.mp3', (buffer) => {
+        // console.log("✅ Sound loaded:", buffer);
+        collectSound = new Audio(listener);
+        collectSound.setBuffer(buffer);
+        collectSound.setVolume(0.5);
+    });
+
+    audioLoader.load('/death.mp3', (buffer) => {
+        // console.log("✅ Sound loaded:", buffer);
+        deathSound = new Audio(listener);
+        deathSound.setBuffer(buffer);
+        deathSound.setVolume(0.3);
+    });
+
+    audioLoader.load('/fall.mp3', (buffer) => {
+        // console.log("✅ Sound loaded:", buffer);
+        fallSound = new Audio(listener);
+        fallSound.setBuffer(buffer);
+        fallSound.setVolume(1);
+    });
+
     // Mouse control
     document.addEventListener('mousemove', onMouseMove);
     window.addEventListener('resize', onWindowResize);
+
+    // window.addEventListener('click', () => {
+    //     if (collectSound) collectSound.play();
+    // });
 }
 
 function playPacmanAnimation(name, { once = false } = {}) {
@@ -324,53 +358,15 @@ function animate() {
 
             if (pacman.position.y < -10 && !respawnTimeout) {
 
-                // var tl = gsap.timeline({
 
-                // });
+                if (fallSound && !fallSound.isPlaying) {
+                    fallSound.play();
+                }
 
-                // tl.to(shaderProps, {
-                //     speed: shaderProps.speed + 10,
-                //     duration: 2.5,
-                //     ease: "circ.out",
-                // }).to(groundMaterial.uniforms.color1.value, {
-                //     r: 0.5,
-                //     g: 0.8,
-                //     b: 0.9,
-                //     duration: 0.5,
-                //     ease: "circ.out",
-                // }, ('<')).to(groundMaterial.uniforms.thickness, {
-                //     value: 3.4,
-                //     duration: 1.5,
-                //     ease: "circ.out",
-                // }, ('<50%')).to(groundMaterial.uniforms.color1.value, {
-                //     r: 0.082,
-                //     g: 0.384,
-                //     b: 0.522,
-                //     duration: 1.0,
-                //     delay: 1.5,
-                //     ease: "power1.inOut",
-                // }, ('<')).to(groundMaterial.uniforms.thickness, {
-                //     value: 2.2,
-                //     duration: 1.0,
-                //     ease: "circ.out",
-                // })
                 shaderAnimationDie()
                 respawnTimeout = setTimeout(respawnPacman, 3000);
             }
-            // if (pacman.position.y > 20) {
-            //     isFalling = false
-            //     fallSpeed = 0;
-            //     // pacman.position.y = 1
-            //     gsap.to(pacman.position, {
-            //         y: 1,
-            //         duration: 2,
-            //         delay: 3000,
-            //         ease: "bounce.out",
-            //         onUpdate: () => {
-            //             console.log(pacman.position.y)
-            //         },
-            //     })
-            // }
+
         }
 
         // Collision detection
@@ -378,8 +374,11 @@ function animate() {
 
             if (collectingFruit === false) {
                 score++;
-                document.getElementById('score').innerText = "Score: " + score;
+                document.getElementById('score').innerText =score;
 
+                if (collectSound && !collectSound.isPlaying) {
+                    collectSound.play();
+                }
                 const fruitMixer = new THREE.AnimationMixer(fruit);
                 const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
 
@@ -433,6 +432,17 @@ function animate() {
             playPacmanAnimation("DIE", { once: true });
             shaderAnimationDie()
             respawnTimeout = setTimeout(respawnPacman, 3000);
+            
+            if (deathSound && !deathSound.isPlaying) {
+                deathSound.play();
+            }
+
+            const distanceFromCenter = pacman.position.length(); // distance to (0, 0)
+            if (distanceFromCenter < platformSize * 0.35) { // e.g. inner 25% of platform
+                setTimeout(() => {
+                ghost.respawn();
+                }, 3000);
+            }
         }
     }
 
@@ -451,6 +461,7 @@ function onWindowResize() {
 
 
 function respawnPacman() {
+
     pacman.position.set(0, 30, 0);
     fallSpeed = 0;
     isFalling = false;
@@ -458,6 +469,6 @@ function respawnPacman() {
     respawnTimeout = null;
 
     score = 0;
-    document.getElementById('score').innerText = "Score: " + score;
+    document.getElementById('score').innerText = score;
     playPacmanAnimation("JUMP");
 }

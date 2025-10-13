@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Pacman Basic Three.js</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+    <title>Pacman</title>
+    <link rel="icon" type="image/x-icon" href="favicon.png">
     <style>
         body {
             margin: 0;
@@ -14,7 +18,7 @@
             display: block;
         }
 
-        #score {
+        .score__container {
             position: absolute;
             top: 10px;
             left: 50%;
@@ -22,13 +26,169 @@
             font-family: Arial, sans-serif;
             font-size: 20px;
             transform: translateX(-50%);
+            height: min-content;
+        }
+
+        .score__container>div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .score__container p {
+            font-family: "Jersey 10", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            color: #FFC300;
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 0rem;
+        }
+
+        #score {
+            font-size: 4rem;
+            margin: 0rem;
+        }
+
+
+
+        .button__container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        button {
+            background-color: #FFC300;
+            aspect-ratio: 1/1;
+            display: grid;
+            place-content: center;
+            border: none;
+            border-radius: 5px;
+            width: 3rem;
+
+            cursor: pointer;
+        }
+
+        #myPopover {
+            background-color: #0d0b15;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        }
+
+        .popover__content {
+            width: 30rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: "Jersey 10", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            color: #FFC300;
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 0rem;
+            text-wrap: balance;
+        }
+
+        .popover__content > video{
+            width: 80%;
         }
     </style>
-    
+
 </head>
 
 <body>
-    <div id="score">Score: 0</div>
+
+    <div class="score__container">
+        <p>score:</p>
+        <div>
+            <p id="score">0</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44" fill="none">
+                <rect x="18" y="32" width="4" height="4" fill="#FFC300" />
+                <rect y="27" width="4" height="4" fill="#FFC300" />
+                <rect x="18" y="36" width="4" height="4" fill="#FFC300" />
+                <rect y="31" width="4" height="4" fill="#FFC300" />
+                <rect x="22" y="28" width="4" height="4" fill="#FFC300" />
+                <rect x="4" y="23" width="4" height="4" fill="#FFC300" />
+                <rect x="20" y="30" width="2" height="2" fill="#FFC300" />
+                <rect x="25" y="19" width="2" height="8" fill="#FFC300" />
+                <rect x="23" y="12" width="2" height="7" fill="#FFC300" />
+                <rect x="21" y="8" width="2" height="4" fill="#FFC300" />
+                <rect x="13" y="22" width="2" height="2" fill="#FFC300" />
+                <rect x="17" y="8" width="2" height="8" fill="#FFC300" />
+                <rect x="15" y="16" width="2" height="6" fill="#FFC300" />
+                <rect x="19" y="4" width="2" height="4" fill="#FFC300" />
+                <rect x="15" width="4" height="4" fill="#FFC300" />
+                <rect x="2" y="25" width="2" height="2" fill="#FFC300" />
+                <rect x="30" y="30" width="2" height="2" fill="#FFC300" />
+                <rect x="12" y="25" width="2" height="2" fill="#FFC300" />
+                <rect x="20" y="40" width="2" height="2" fill="#FFC300" />
+                <rect x="2" y="35" width="2" height="2" fill="#FFC300" />
+                <rect x="30" y="40" width="2" height="2" fill="#FFC300" />
+                <rect x="12" y="35" width="2" height="2" fill="#FFC300" />
+                <rect x="22" y="32" width="4" height="4" fill="#FFC300" />
+                <rect x="4" y="27" width="4" height="4" fill="#FFC300" />
+                <rect x="22" y="36" width="4" height="4" fill="#FFC300" />
+                <rect x="4" y="31" width="4" height="4" fill="#FFC300" />
+                <rect x="22" y="40" width="4" height="4" fill="#FFC300" />
+                <rect x="4" y="35" width="4" height="4" fill="#FFC300" />
+                <rect x="26" y="28" width="4" height="4" fill="#FFC300" />
+                <rect x="8" y="23" width="4" height="4" fill="#FFC300" />
+                <rect x="26" y="32" width="4" height="4" fill="#FFC300" />
+                <rect x="8" y="27" width="4" height="4" fill="#FFC300" />
+                <rect x="26" y="36" width="4" height="4" fill="#FFC300" />
+                <rect x="8" y="31" width="4" height="4" fill="#FFC300" />
+                <rect x="26" y="40" width="4" height="4" fill="#FFC300" />
+                <rect x="8" y="35" width="4" height="4" fill="#FFC300" />
+                <rect x="30" y="32" width="4" height="4" fill="#FFC300" />
+                <rect x="12" y="27" width="4" height="4" fill="#FFC300" />
+                <rect x="30" y="36" width="4" height="4" fill="#FFC300" />
+                <rect x="12" y="31" width="4" height="4" fill="#FFC300" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="button__container">
+        <button class="button__info" popovertarget="myPopover">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect y="5" width="5" height="5" fill="#181822" />
+                <rect y="10" width="5" height="5" fill="#181822" />
+                <rect x="5" width="5" height="5" fill="#181822" />
+                <rect x="2.5" y="2.5" width="2.5" height="2.5" fill="#181822" />
+                <rect x="15" y="2.5" width="2.5" height="2.5" fill="#181822" />
+                <rect x="2.5" y="15" width="2.5" height="2.5" fill="#181822" />
+                <rect x="15" y="15" width="2.5" height="2.5" fill="#181822" />
+                <rect x="5" y="5" width="5" height="5" fill="#181822" />
+                <rect x="5" y="10" width="5" height="5" fill="#181822" />
+                <rect x="5" y="15" width="5" height="5" fill="#181822" />
+                <rect x="10" width="5" height="5" fill="#181822" />
+                <rect x="10" y="5" width="5" height="5" fill="#181822" />
+                <rect x="10" y="10" width="5" height="5" fill="#181822" />
+                <rect x="10" y="15" width="5" height="5" fill="#181822" />
+                <rect x="15" y="5" width="5" height="5" fill="#181822" />
+                <rect x="15" y="10" width="5" height="5" fill="#181822" />
+                <rect x="8.75" y="5" width="2.5" height="2.5" fill="#FFC300" />
+                <rect x="8.75" y="8.75" width="2.5" height="6.25" fill="#FFC300" />
+            </svg>
+        </button>
+    </div>
+    <div popover id="myPopover">
+        <div class="popover__content">
+            <video autoplay mute loop>
+                <source src="instructions.mp4" type="video/mp4">
+            </video>
+            <h3>THREE.js PacMan</h3>
+            <p>Collect fruit and watch out for the ghost. Pacman will follow your mouse cursor. Also don't fall off the
+                platform.</p>
+        </div>
+    </div>
+
+
     <script type="module" src="script/pacman.js"></script>
 </body>
 
