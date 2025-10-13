@@ -126,11 +126,19 @@ function init() {
     audioButton = document.querySelector(".button__audio")
     audioButton.addEventListener("click", handleAudioToggle)
 
+    const popover = document.getElementById("myPopover");
+    popover.addEventListener("toggle", handleInfoToggle)
+    // console.log("Toggled:", event.newState);
+
+}
+
+function handleInfoToggle() {
+    PAUSED = !PAUSED
 }
 
 function handleAudioToggle() {
     AUDIO = !AUDIO
-    console.log(AUDIO)
+    // console.log(AUDIO)
 
     if (AUDIO) {
         audioButton.innerHTML = `
@@ -369,8 +377,9 @@ function shaderAnimationDie() {
 
 
 function animate() {
-    if(!PAUSED){
-        requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
+    if (PAUSED) {
+        return
     }
 
     const delta = clock.getDelta();
