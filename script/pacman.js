@@ -62,7 +62,7 @@ animate();
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x181822);
+    // scene.background = new THREE.Color(0x18182205);
 
     const aspect = window.innerWidth / window.innerHeight;
     camera = new THREE.OrthographicCamera(
@@ -81,6 +81,9 @@ function init() {
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.setClearColor(0x000000, 0); // second arg = alpha
+    // renderer.domElement.style.background = 'linear-gradient(to bottom, #181822, #050510)';
     document.body.appendChild(renderer.domElement);
 
     // Lights
