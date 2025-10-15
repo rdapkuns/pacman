@@ -103,21 +103,21 @@ function init() {
     loadWall()
 
 
-    audioLoader.load('/retro-coin.mp3', (buffer) => {
+    audioLoader.load(import.meta.env.BASE_URL + 'retro-coin.mp3', (buffer) => {
         // console.log("✅ Sound loaded:", buffer);
         collectSound = new Audio(listener);
         collectSound.setBuffer(buffer);
         collectSound.setVolume(0.5);
     });
 
-    audioLoader.load('/death.mp3', (buffer) => {
+    audioLoader.load(import.meta.env.BASE_URL + 'death.mp3', (buffer) => {
         // console.log("✅ Sound loaded:", buffer);
         deathSound = new Audio(listener);
         deathSound.setBuffer(buffer);
         deathSound.setVolume(0.3);
     });
 
-    audioLoader.load('/fall.mp3', (buffer) => {
+    audioLoader.load(import.meta.env.BASE_URL + 'fall.mp3', (buffer) => {
         // console.log("✅ Sound loaded:", buffer);
         fallSound = new Audio(listener);
         fallSound.setBuffer(buffer);
@@ -248,7 +248,7 @@ function createGround() {
 
 function loadPacman() {
     const loader = new GLTFLoader();
-    loader.load('/pacman.glb', (gltf) => {
+    loader.load(import.meta.env.BASE_URL + 'pacman.glb', (gltf) => {
         pacman = gltf.scene;
         pacman.scale.set(1, 1, 1);
         pacman.position.set(0, 1, 0);
@@ -294,7 +294,7 @@ function loadPacman() {
 
 function loadFruitModel() {
     const loader = new GLTFLoader();
-    loader.load('/cherry.glb', (gltf) => {
+    loader.load(import.meta.env.BASE_URL + 'cherry.glb', (gltf) => {
         fruitTemplate = gltf.scene;
         fruitTemplate.scale.set(1.5, 1.5, 1.5);
 
@@ -307,12 +307,12 @@ function loadFruitModel() {
 }
 
 function loadWall() {
-    const texture = new THREE.TextureLoader().load("/baked.jpg")
+    const texture = new THREE.TextureLoader().load(import.meta.env.BASE_URL + "baked.jpg")
     texture.flipY = -1
     const wallTexture = new THREE.MeshBasicMaterial({ map: texture })
 
     const loader = new GLTFLoader();
-    loader.load('/wall.glb', (gltf) => {
+    loader.load(import.meta.env.BASE_URL + 'wall.glb', (gltf) => {
 
 
         wall = gltf.scene;
@@ -465,7 +465,7 @@ function animate() {
         }
 
         // Collision detection
-        if (fruit && !isFalling && pacman.position.distanceTo(fruit.position) < 1.2) {
+        if (fruit && !isFalling && pacman.position.distanceTo(fruit.position) < 2) {
 
             if (collectingFruit === false) {
                 score++;

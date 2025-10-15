@@ -11,7 +11,7 @@ export default class Ghost {
         this.speed = 0.10;
 
         const loader = new GLTFLoader();
-        loader.load("/ghost.glb", (gltf) => {
+        loader.load(import.meta.env.BASE_URL + "ghost.glb", (gltf) => {
             this.mesh = gltf.scene;
             this.mesh.scale.set(1, 1, 1);
             this.respawn();
