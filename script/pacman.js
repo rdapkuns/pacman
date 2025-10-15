@@ -19,6 +19,7 @@ let score = 0;
 let mixers = []; // store all animation mixers
 let clock = new THREE.Clock();
 let pacman;
+let wall;
 let ghost;
 
 let pacmanMixer;
@@ -99,6 +100,7 @@ function init() {
     loadFruitModel();
 
     // spawnFruit();
+    loadWall()
 
 
     audioLoader.load('/retro-coin.mp3', (buffer) => {
@@ -234,10 +236,10 @@ function createGround() {
     ground = new THREE.Mesh(groundGeo, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
 
-    const baseGeo = new THREE.BoxGeometry(platformSize, 4, platformSize);
-    const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x050a1a });
+    const baseGeo = new THREE.BoxGeometry(platformSize, 1, platformSize);
+    const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x0E0827 });
     const base = new THREE.Mesh(baseGeo, baseMaterial);
-    base.position.set(0, -2.1, 0)
+    base.position.set(0, -0.6, 0)
 
     scene.add(ground);
     scene.add(base);
@@ -301,6 +303,32 @@ function loadFruitModel() {
 
         // Spawn the first fruit once the template is ready
         spawnFruit();
+    });
+}
+
+function loadWall() {
+    const texture = new THREE.TextureLoader().load("/baked.jpg")
+    texture.flipY = -1
+    const wallTexture = new THREE.MeshBasicMaterial({ map: texture })
+
+    const loader = new GLTFLoader();
+    loader.load('/wall.glb', (gltf) => {
+
+
+        wall = gltf.scene;
+        wall.scale.set(5.82, 5.82, 5.82);
+        wall.position.set(0.5, -0.5, -0.5);
+
+        wall.traverse((child) => {
+            child.material = wallTexture
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
+        scene.add(wall);
+
     });
 }
 
