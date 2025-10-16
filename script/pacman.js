@@ -6,17 +6,14 @@ import groundVertex from './shaders/ground.vert.glsl?raw';
 import groundFragment from './shaders/ground.frag.glsl?raw';
 
 import { gsap } from "gsap";
-import { thickness } from "three/tsl";
 
 import Ghost from "./ghost.js";
-import audioCollect from "/retro-coin.mp3"
 
 
 let scene, camera, renderer;
-// let fruit;
 let score = 0;
 
-let mixers = []; // store all animation mixers
+let mixers = [];
 let clock = new THREE.Clock();
 let pacman;
 let wall;
@@ -41,14 +38,14 @@ let isFalling = false;
 let fallSpeed = 0;
 let respawnTimeout = null;
 
-let fruitTemplate = null; // holds the loaded cherry glTF scene
+let fruitTemplate = null;
 let fruitAnimations = null;
 let fruit = null;
 let collectingFruit = false
 
 
 const platformSize = 30;
-const frustumSize = 40; // moved here so it's global
+const frustumSize = 40;
 let shaderProps = { speed: 1 };
 
 
@@ -63,7 +60,6 @@ animate();
 
 function init() {
     scene = new THREE.Scene();
-    // scene.background = new THREE.Color(0x18182205);
 
     const aspect = window.innerWidth / window.innerHeight;
     camera = new THREE.OrthographicCamera(
@@ -83,11 +79,9 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    renderer.setClearColor(0x000000, 0); // second arg = alpha
-    // renderer.domElement.style.background = 'linear-gradient(to bottom, #181822, #050510)';
+    renderer.setClearColor(0x000000, 0);
     document.body.appendChild(renderer.domElement);
 
-    // Lights
     scene.add(new THREE.AmbientLight(0xffffff, 1));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
     dirLight.position.set(5, 10, 7);
@@ -99,32 +93,27 @@ function init() {
     loadPacman();
     loadFruitModel();
 
-    // spawnFruit();
     loadWall()
 
 
     audioLoader.load(import.meta.env.BASE_URL + 'retro-coin.mp3', (buffer) => {
-        // console.log("✅ Sound loaded:", buffer);
         collectSound = new Audio(listener);
         collectSound.setBuffer(buffer);
         collectSound.setVolume(0.5);
     });
 
     audioLoader.load(import.meta.env.BASE_URL + 'death.mp3', (buffer) => {
-        // console.log("✅ Sound loaded:", buffer);
         deathSound = new Audio(listener);
         deathSound.setBuffer(buffer);
         deathSound.setVolume(0.3);
     });
 
     audioLoader.load(import.meta.env.BASE_URL + 'fall.mp3', (buffer) => {
-        // console.log("✅ Sound loaded:", buffer);
         fallSound = new Audio(listener);
         fallSound.setBuffer(buffer);
         fallSound.setVolume(1);
     });
 
-    // Mouse control
     document.addEventListener('mousemove', onMouseMove);
     window.addEventListener('resize', onWindowResize);
 
@@ -132,9 +121,7 @@ function init() {
     audioButton.addEventListener("click", handleAudioToggle)
 
     const popover = document.getElementById("myPopover");
-    popover.addEventListener("toggle", handleInfoToggle)
-    // console.log("Toggled:", event.newState);
-
+    popover.addEventListener("toggle", handleInfoToggle);
 }
 
 function handleInfoToggle() {
@@ -143,7 +130,6 @@ function handleInfoToggle() {
 
 function handleAudioToggle() {
     AUDIO = !AUDIO
-    // console.log(AUDIO)
 
     if (AUDIO) {
         audioButton.innerHTML = `
@@ -194,7 +180,6 @@ function playPacmanAnimation(name, { once = false } = {}) {
     const newAction = pacmanActions[name];
 
     if (activeAction !== newAction) {
-        // Configure looping mode
         if (once) {
             newAction.setLoop(THREE.LoopOnce, 0);
             newAction.clampWhenFinished = true;
@@ -203,7 +188,6 @@ function playPacmanAnimation(name, { once = false } = {}) {
             newAction.clampWhenFinished = false;
         }
 
-        // Crossfade
         if (activeAction) {
             activeAction.fadeOut(0.2);
         }
@@ -253,12 +237,6 @@ function loadPacman() {
         pacman.scale.set(1, 1, 1);
         pacman.position.set(0, 1, 0);
 
-        // pacman.traverse((child) => {
-        //     if (child.isMesh) {
-        //         child.material = new THREE.MeshPhongMaterial({ color: 0xfccf03 }); // Yellow
-        //     }
-        // });
-
         pacman.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow = true;
@@ -268,20 +246,10 @@ function loadPacman() {
 
         scene.add(pacman);
 
-        // if (gltf.animations.length > 0) {
-        //     const pacmanMixer = new THREE.AnimationMixer(pacman);
-        //     console.log(gltf.animations[2])
-        //     const action = pacmanMixer.clipAction(gltf.animations[2]);
-        //     action.play();
-        //     mixers.push(pacmanMixer);
-        // }
-
         pacmanMixer = new THREE.AnimationMixer(pacman);
 
         gltf.animations.forEach((clip) => {
-            // console.log(pacmanMixer.clipAction(clip))
             pacmanActions[clip.name] = pacmanMixer.clipAction(clip);
-            // console.log(pacmanActions)
         });
 
         activeAction = pacmanActions["JUMP"];
@@ -297,11 +265,8 @@ function loadFruitModel() {
     loader.load(import.meta.env.BASE_URL + 'cherry.glb', (gltf) => {
         fruitTemplate = gltf.scene;
         fruitTemplate.scale.set(1.5, 1.5, 1.5);
-
-        // Save animations separately (don't attach to userData)
         fruitAnimations = gltf.animations;
 
-        // Spawn the first fruit once the template is ready
         spawnFruit();
     });
 }
@@ -334,15 +299,13 @@ function loadWall() {
 
 
 function spawnFruit() {
-    if (!fruitTemplate) return; // not loaded yet
+    if (!fruitTemplate) return;
 
-    // remove old fruit
     if (fruit) {
         scene.remove(fruit);
         mixers = mixers.filter(m => m.getRoot() !== fruit);
     }
 
-    // clone the model
     fruit = fruitTemplate.clone(true);
     fruit.position.set(
         (Math.random() - 0.5) * (platformSize - 2),
@@ -351,10 +314,9 @@ function spawnFruit() {
     );
     scene.add(fruit);
 
-    // Apply animation (reuse original clips)
     if (fruitAnimations && fruitAnimations.length > 0) {
         const fruitMixer = new THREE.AnimationMixer(fruit);
-        const action = fruitMixer.clipAction(fruitAnimations[1]); // pick the first animation
+        const action = fruitMixer.clipAction(fruitAnimations[1]);
         action.play();
         mixers.push(fruitMixer);
     }
@@ -364,8 +326,6 @@ function spawnFruit() {
 function onMouseMove(event) {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    // shaderProps = mouse.x + 1
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
@@ -425,7 +385,6 @@ function animate() {
 
     if (pacman) {
         if (!isFalling && !isCaught) {
-            // Normal movement toward target
             const direction = targetWorldPos.clone().sub(pacman.position);
             direction.y = 0;
 
@@ -437,7 +396,6 @@ function animate() {
                 pacman.lookAt(pacman.position.clone().add(direction));
             }
 
-            // Check bounds
             if (
                 Math.abs(pacman.position.x) > platformSize / 2 + 1 ||
                 Math.abs(pacman.position.z) > platformSize / 2 + 1
@@ -447,7 +405,6 @@ function animate() {
             }
 
         } else if (isFalling) {
-            // Falling
             fallSpeed -= 0.02;
             pacman.position.y += fallSpeed;
 
@@ -464,7 +421,6 @@ function animate() {
 
         }
 
-        // Collision detection
         if (fruit && !isFalling && pacman.position.distanceTo(fruit.position) < 2) {
 
             if (collectingFruit === false) {
@@ -475,7 +431,7 @@ function animate() {
                     collectSound.play();
                 }
                 const fruitMixer = new THREE.AnimationMixer(fruit);
-                const action = fruitMixer.clipAction(fruitAnimations[0]); // pick the first animation
+                const action = fruitMixer.clipAction(fruitAnimations[0]);
 
                 collectingFruit = true
                 action.setLoop(THREE.LoopOnce);
@@ -485,7 +441,6 @@ function animate() {
 
                 var tl = gsap.timeline({
                     onUpdate: () => {
-                        // console.log(shaderProps.speed)
                     },
                 });
 
@@ -507,11 +462,10 @@ function animate() {
                     delay: 0.6,
                     ease: "power1.inOut",
                 }, ('<'));
-                // tl.to(shaderProps, { speed: 1, duration: 1 });
 
                 fruitMixer.addEventListener('finished', () => {
                     scene.remove(fruit);
-                    mixers = mixers.filter(m => m !== fruitMixer); // cleanup
+                    mixers = mixers.filter(m => m !== fruitMixer);
                     spawnFruit();
                     collectingFruit = false
 
@@ -522,7 +476,6 @@ function animate() {
         //IF CAUGHT BY GHOST
 
         if (ghost && !isCaught && pacman.position.distanceTo(ghost.mesh.position) < 3) {
-            // console.log("caught")
             isCaught = true
             playPacmanAnimation("DIE", { once: true });
             shaderAnimationDie()
@@ -532,8 +485,8 @@ function animate() {
                 deathSound.play();
             }
 
-            const distanceFromCenter = pacman.position.length(); // distance to (0, 0)
-            if (distanceFromCenter < platformSize * 0.35) { // e.g. inner 25% of platform
+            const distanceFromCenter = pacman.position.length();
+            if (distanceFromCenter < platformSize * 0.35) {
                 setTimeout(() => {
                     ghost.respawn();
                 }, 3000);

@@ -30,7 +30,6 @@ export default class Ghost {
     update(delta) {
         if (!this.mesh || !this.pacman) return;
 
-        // Move toward Pac-Man
         const dir = new THREE.Vector3().subVectors(this.pacman.position, this.mesh.position);
         dir.y = 0;
         if (dir.length() > 1.5) {
@@ -47,24 +46,24 @@ export default class Ghost {
 
         const platformSize = 30
 
-        const edgeOffset = platformSize / 2 - 1; // stay slightly inside the edge
-        const side = Math.floor(Math.random() * 4); // pick one of 4 sides
+        const edgeOffset = platformSize / 2 - 1;
+        const side = Math.floor(Math.random() * 4);
         let x, z;
 
         switch (side) {
-            case 0: // top edge
+            case 0:
                 x = (Math.random() - 0.5) * platformSize;
                 z = edgeOffset;
                 break;
-            case 1: // bottom edge
+            case 1:
                 x = (Math.random() - 0.5) * platformSize;
                 z = -edgeOffset;
                 break;
-            case 2: // left edge
+            case 2:
                 x = -edgeOffset;
                 z = (Math.random() - 0.5) * platformSize;
                 break;
-            case 3: // right edge
+            case 3:
                 x = edgeOffset;
                 z = (Math.random() - 0.5) * platformSize;
                 break;
